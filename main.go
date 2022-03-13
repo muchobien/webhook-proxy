@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/muchobien/webhook-proxy/proxy"
 )
 
 const (
@@ -24,21 +24,12 @@ func ProxyWebHooks(c *fiber.Ctx) error {
 		return c.SendStatus(404)
 	}
 
-	req := agent.Post(service).Body(c.Body())
-
-	headers := c.GetReqHeaders()
-	for k, v := range headers {
-		if strings.ToLower(k) != "connection" {
-			req.Set(k, v)
-		}
+	if err := proxy.Do(c, service); err != nil {
+		return err
 	}
 
-	code, _, _ := req.Bytes()
-	if code > 399 {
-		return c.SendStatus(code)
-	}
-
-	return c.SendString(service)
+	c.Response().Header.Del(fiber.HeaderServer)
+	return nil
 }
 
 func main() {
@@ -49,7 +40,7 @@ func main() {
 		return c.SendString("Welcome to the Webhook Proxy!")
 	})
 
-	app.Post("/webhook/:service", ProxyWebHooks)
+	app.Post("/wh/:service", ProxyWebHooks)
 
 	app.Listen(fmt.Sprintf(":%s", port))
 }
