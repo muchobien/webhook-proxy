@@ -6,18 +6,18 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/muchobien/webhook-proxy/proxy"
+	"github.com/gofiber/fiber/v2/middleware/proxy"
 )
 
 func ProxyWebHooks(c *fiber.Ctx) error {
-	service := c.Query("service")
+	upstream := c.Query("upstream")
 
-	_, err := url.ParseRequestURI(service)
+	_, err := url.ParseRequestURI(upstream)
 	if err != nil {
 		return c.SendStatus(400)
 	}
 
-	if err := proxy.Do(c, service); err != nil {
+	if err := proxy.Do(c, upstream); err != nil {
 		return err
 	}
 
@@ -33,7 +33,7 @@ func main() {
 		return c.SendString("Welcome to the Webhook Proxy!")
 	})
 
-	app.Post("/wh", ProxyWebHooks)
+	app.Post("/", ProxyWebHooks)
 
 	app.Listen(fmt.Sprintf(":%s", port))
 }
